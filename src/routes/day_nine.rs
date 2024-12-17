@@ -17,21 +17,16 @@ impl Bucket {
     }
 
     pub fn withdraw(&mut self) -> Option<()> {
-        println!("calling withdraw");
         if self.capacity > 0 {
-            println!("withdrawing 1 liter of milk");
             self.capacity -= 1;
             Some(())
         } else {
-            println!("bucket is empty, unable to withdraw milk");
             None
         }
     }
 
     pub fn refill(&mut self) {
-        println!("calling refill");
         if self.capacity < 5 {
-            println!("increasing capacity by 1");
             self.capacity += 1;
         }
     }
