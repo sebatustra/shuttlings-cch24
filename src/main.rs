@@ -5,6 +5,7 @@ use tokio::time::{interval, Duration};
 use rand::SeedableRng;
 use axum::{routing::{get, post, delete, put}, Router};
 use sqlx::PgPool;
+use tower_http::services::ServeDir;
 
 pub mod routes;
 use routes::{
@@ -38,6 +39,11 @@ use routes::{
         undo,
         reset
     },
+    day_twenty_three::{
+        light_star,
+        change_color,
+        change_ornament
+    }
 };
 
 pub struct AppState {
@@ -87,6 +93,10 @@ async fn main(
         .route("/19/remove/:id", delete(remove))
         .route("/19/undo/:id", put(undo))
         .route("/19/draft", post(draft))
+        .route("/23/star", get(light_star))
+        .route("/23/present/:color", get(change_color))
+        .route("/23/ornament/:state/:n", get(change_ornament))
+        .nest_service("/assets", ServeDir::new("assets"))
         .with_state(app_state.clone());
 
     tokio::spawn(async move {
