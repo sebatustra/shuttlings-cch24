@@ -1,5 +1,5 @@
 use std::{str::FromStr, sync::Arc};
-use axum::{extract::State, http::{header, HeaderMap, StatusCode}, response::IntoResponse, Json};
+use axum::{extract::State, http::{header, HeaderMap, StatusCode}, Json};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use jsonwebtoken::{encode, Header, EncodingKey, decode, DecodingKey, Validation, Algorithm};
@@ -102,9 +102,4 @@ fn get_exp_for_one_hour() -> usize {
 
     let one_hour_later = now.as_secs() + 3600; // Add 1 hour in seconds
     one_hour_later as usize
-}
-
-
-pub async fn decode_santa() -> impl IntoResponse {
-
 }

@@ -3,7 +3,9 @@ use rand::rngs::StdRng;
 use tokio::sync::Mutex;
 use tokio::time::{interval, Duration};
 use rand::SeedableRng;
-use axum::{routing::{get, post}, Router};
+use axum::{routing::{get, post, delete, put}, Router};
+use sqlx::PgPool;
+
 pub mod routes;
 use routes::{
     day_five::process_manifest, day_minus_one::{
@@ -28,23 +30,40 @@ use routes::{
         wrap,
         unwrap
     },
+    day_nineteen::{
+        quote_controller::QuoteController,
+        draft,
+        cite,
+        remove,
+        undo,
+        reset
+    },
 };
 
 pub struct AppState {
     pub bucket: Mutex<Bucket>,
     pub board: Mutex<Board>,
     pub rng: Mutex<StdRng>,
-    pub secret: Mutex<String>
+    pub secret: Mutex<String>,
+    pub quote_controller: QuoteController,
 }
 
 #[shuttle_runtime::main]
-async fn main() -> shuttle_axum::ShuttleAxum {
+async fn main(
+    #[shuttle_shared_db::Postgres] pool: PgPool,
+) -> shuttle_axum::ShuttleAxum {
+
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
 
     let app_state = Arc::new(AppState {
         bucket: Mutex::new(Bucket::init()),
         board: Mutex::new(Board::new()),
         rng: Mutex::new(rand::rngs::StdRng::seed_from_u64(2024)),
-        secret: Mutex::new(String::from("ULTRA_SECRET!!"))
+        secret: Mutex::new(String::from("ULTRA_SECRET!!")),
+        quote_controller: QuoteController::build(pool)
     });
     
     let router = Router::new()
@@ -63,6 +82,11 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .route("/12/random-board", get(generate_random_board))
         .route("/16/wrap", post(wrap))
         .route("/16/unwrap", get(unwrap))
+        .route("/19/reset", post(reset))
+        .route("/19/cite/:id", get(cite))
+        .route("/19/remove/:id", delete(remove))
+        .route("/19/undo/:id", put(undo))
+        .route("/19/draft", post(draft))
         .with_state(app_state.clone());
 
     tokio::spawn(async move {
